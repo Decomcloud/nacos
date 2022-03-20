@@ -147,6 +147,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         String groupedServiceName = NamingUtils.getGroupedName(serviceName, groupName);
         if (instance.isEphemeral()) {
             BeatInfo beatInfo = beatReactor.buildBeatInfo(groupedServiceName, instance);
+            // 添加心跳任务, 默认5s
             beatReactor.addBeatInfo(groupedServiceName, beatInfo);
         }
         final Map<String, String> params = new HashMap<String, String>(32);
@@ -307,6 +308,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         params.put(CommonParams.CLUSTER_NAME, beatInfo.getCluster());
         params.put(IP_PARAM, beatInfo.getIp());
         params.put(PORT_PARAM, String.valueOf(beatInfo.getPort()));
+        // 发送put请求到server
         String result = reqApi(UtilAndComs.nacosUrlBase + "/instance/beat", params, bodyMap, HttpMethod.PUT);
         return JacksonUtils.toObj(result);
     }
