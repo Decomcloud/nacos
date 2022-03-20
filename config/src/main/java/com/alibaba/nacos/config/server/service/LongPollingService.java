@@ -292,6 +292,7 @@ public class LongPollingService {
         NotifyCenter.registerToPublisher(LocalDataChangeEvent.class, NotifyCenter.ringBufferSize);
         
         // Register A Subscriber to subscribe LocalDataChangeEvent.
+        // 初始化时注册监听事件
         NotifyCenter.registerSubscriber(new Subscriber() {
             
             @Override
@@ -301,6 +302,8 @@ public class LongPollingService {
                 } else {
                     if (event instanceof LocalDataChangeEvent) {
                         LocalDataChangeEvent evt = (LocalDataChangeEvent) event;
+                        // 执行DataChangeTask
+                        // com.alibaba.nacos.config.server.service.LongPollingService.DataChangeTask.run
                         ConfigExecutor.executeLongPolling(new DataChangeTask(evt.groupKey, evt.isBeta, evt.betaIps));
                     }
                 }
@@ -329,6 +332,7 @@ public class LongPollingService {
         public void run() {
             try {
                 ConfigCacheService.getContentBetaMd5(groupKey);
+                // 有数据改变, 遍历所有的长轮询
                 for (Iterator<ClientLongPolling> iter = allSubs.iterator(); iter.hasNext(); ) {
                     ClientLongPolling clientSub = iter.next();
                     if (clientSub.clientMd5Map.containsKey(groupKey)) {
@@ -341,14 +345,16 @@ public class LongPollingService {
                         if (StringUtils.isNotBlank(tag) && !tag.equals(clientSub.tag)) {
                             continue;
                         }
-                        
+                        // 有变化
                         getRetainIps().put(clientSub.ip, System.currentTimeMillis());
+                        // 移除长轮询的存储
                         iter.remove(); // Delete subscribers' relationships.
                         LogUtil.CLIENT_LOG
                                 .info("{}|{}|{}|{}|{}|{}|{}", (System.currentTimeMillis() - changeTime), "in-advance",
                                         RequestUtil
                                                 .getRemoteIp((HttpServletRequest) clientSub.asyncContext.getRequest()),
                                         "polling", clientSub.clientMd5Map.size(), clientSub.probeRequestSize, groupKey);
+                        // 长轮询返回
                         clientSub.sendResponse(Arrays.asList(groupKey));
                     }
                 }

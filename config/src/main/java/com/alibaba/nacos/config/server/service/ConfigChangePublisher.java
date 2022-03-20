@@ -37,6 +37,7 @@ public class ConfigChangePublisher {
         if (PropertyUtil.isEmbeddedStorage() && !EnvUtil.getStandaloneMode()) {
             return;
         }
+        // 发布配置变更事件
         NotifyCenter.publishEvent(event);
     }
     

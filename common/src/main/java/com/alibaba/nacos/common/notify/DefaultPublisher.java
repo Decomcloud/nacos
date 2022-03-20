@@ -92,6 +92,7 @@ public class DefaultPublisher extends Thread implements EventPublisher {
     
     @Override
     public void run() {
+        // 取配置变化数据的线程
         openEventHandler();
     }
     
@@ -115,6 +116,7 @@ public class DefaultPublisher extends Thread implements EventPublisher {
                     break;
                 }
                 final Event event = queue.take();
+                // 接收, 处理事件
                 receiveEvent(event);
                 UPDATER.compareAndSet(this, lastEventSequence, Math.max(lastEventSequence, event.sequence()));
             }
@@ -140,8 +142,10 @@ public class DefaultPublisher extends Thread implements EventPublisher {
     @Override
     public boolean publish(Event event) {
         checkIsStart();
+        // 放入queue中
         boolean success = this.queue.offer(event);
         if (!success) {
+            // 放入失败
             LOGGER.warn("Unable to plug in due to interruption, synchronize sending time, event : {}", event);
             receiveEvent(event);
             return true;
@@ -189,6 +193,7 @@ public class DefaultPublisher extends Thread implements EventPublisher {
             
             // Because unifying smartSubscriber and subscriber, so here need to think of compatibility.
             // Remove original judge part of codes.
+            // 通知订阅者
             notifySubscriber(subscriber, event);
         }
     }
@@ -197,7 +202,7 @@ public class DefaultPublisher extends Thread implements EventPublisher {
     public void notifySubscriber(final Subscriber subscriber, final Event event) {
         
         LOGGER.debug("[NotifyCenter] the {} will received by {}", event, subscriber);
-        
+        // com.alibaba.nacos.common.notify.listener.Subscriber.onEvent 通知长轮询的客户端
         final Runnable job = () -> subscriber.onEvent(event);
         final Executor executor = subscriber.executor();
         
