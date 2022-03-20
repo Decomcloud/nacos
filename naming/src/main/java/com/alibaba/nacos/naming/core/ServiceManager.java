@@ -480,13 +480,14 @@ public class ServiceManager implements RecordListener<Service> {
      * @throws Exception any error occurred in the process
      */
     public void registerInstance(String namespaceId, String serviceName, Instance instance) throws NacosException {
-        
+        // 创建服务 根据namespace和serviceName添加或者创建服务
+        // serviceMap key namespace, value => map key: serviceName, value: Service
         createEmptyService(namespaceId, serviceName, instance.isEphemeral());
-        
+
         Service service = getService(namespaceId, serviceName);
-        
+        // 校验
         checkServiceIsNull(service, namespaceId, serviceName);
-        
+        // 添加服务实例
         addInstance(namespaceId, serviceName, instance.isEphemeral(), instance);
     }
     
@@ -636,11 +637,13 @@ public class ServiceManager implements RecordListener<Service> {
         Service service = getService(namespaceId, serviceName);
         
         synchronized (service) {
+            // 内存服务注册
             List<Instance> instanceList = addIpAddresses(service, ephemeral, ips);
             
             Instances instances = new Instances();
             instances.setInstanceList(instanceList);
-            
+            // distro协议生效的部分
+            // 把服务实例放在内存中, 同时发起一个延时的sync的数据复制任务, 延迟一段时间把最新的服务实例数据复制到其他所有的节点上
             consistencyService.put(key, instances);
         }
     }
@@ -801,6 +804,7 @@ public class ServiceManager implements RecordListener<Service> {
                 if (oldInstance != null) {
                     instance.setInstanceId(oldInstance.getInstanceId());
                 } else {
+                    // 生成服务实例ID
                     instance.setInstanceId(instance.generateInstanceId(currentInstanceIds));
                 }
                 instanceMap.put(instance.getDatumKey(), instance);
@@ -866,6 +870,7 @@ public class ServiceManager implements RecordListener<Service> {
     private void putServiceAndInit(Service service) throws NacosException {
         putService(service);
         service = getService(service.getNamespaceId(), service.getName());
+        // 初始化服务
         service.init();
         consistencyService
                 .listen(KeyBuilder.buildInstanceListKey(service.getNamespaceId(), service.getName(), true), service);

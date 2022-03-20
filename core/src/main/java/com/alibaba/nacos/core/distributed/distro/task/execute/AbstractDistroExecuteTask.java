@@ -63,12 +63,16 @@ public abstract class AbstractDistroExecuteTask extends AbstractExecuteTask {
         if (transportAgent.supportCallbackTransport()) {
             doExecuteWithCallback(new DistroExecuteCallback());
         } else {
+            // 执行
             executeDistroTask();
         }
     }
     
     private void executeDistroTask() {
         try {
+            // 执行
+            // 增加, 修改 com.alibaba.nacos.core.distributed.distro.task.execute.DistroSyncChangeTask.doExecute
+            // 删除 com.alibaba.nacos.core.distributed.distro.task.execute.DistroSyncDeleteTask.doExecute
             boolean result = doExecute();
             if (!result) {
                 handleFailedTask();

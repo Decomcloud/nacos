@@ -113,6 +113,8 @@ public final class TaskExecuteWorker implements NacosTaskProcessor, Closeable {
                 try {
                     Runnable task = queue.take();
                     long begin = System.currentTimeMillis();
+                    // 执行
+                    // 注册入口 com.alibaba.nacos.core.distributed.distro.task.execute.AbstractDistroExecuteTask.run
                     task.run();
                     long duration = System.currentTimeMillis() - begin;
                     if (duration > 1000L) {

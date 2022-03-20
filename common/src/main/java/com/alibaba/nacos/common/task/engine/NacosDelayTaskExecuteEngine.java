@@ -122,12 +122,15 @@ public class NacosDelayTaskExecuteEngine extends AbstractNacosTaskExecuteEngine<
     
     @Override
     public void addTask(Object key, AbstractDelayTask newTask) {
+        // 针对同一个key的服务, 1s中多次变动, 只发送一次请求
         lock.lock();
         try {
             AbstractDelayTask existTask = tasks.get(key);
+            // 多次变动, merge
             if (null != existTask) {
                 newTask.merge(existTask);
             }
+            // 放入task 交给ProcessRunnable去执行
             tasks.put(key, newTask);
         } finally {
             lock.unlock();
@@ -151,6 +154,7 @@ public class NacosDelayTaskExecuteEngine extends AbstractNacosTaskExecuteEngine<
             }
             try {
                 // ReAdd task if process failed
+                // 发起异步变动任务
                 if (!processor.process(task)) {
                     retryFailedTask(taskKey, task);
                 }

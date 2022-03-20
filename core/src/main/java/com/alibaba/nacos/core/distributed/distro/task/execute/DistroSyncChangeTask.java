@@ -49,6 +49,7 @@ public class DistroSyncChangeTask extends AbstractDistroExecuteTask {
             Loggers.DISTRO.warn("[DISTRO] {} with null data to sync, skip", toString());
             return true;
         }
+        // com.alibaba.nacos.naming.consistency.ephemeral.distro.v2.DistroClientTransportAgent.syncData
         return getDistroComponentHolder().findTransportAgent(type)
                 .syncData(distroData, getDistroKey().getTargetServer());
     }

@@ -92,7 +92,8 @@ public class InstanceController {
         Collection<InstanceExtensionHandler> handlers = NacosServiceLoader.load(InstanceExtensionHandler.class);
         Loggers.SRV_LOG.info("Load instance extension handler {}", handlers);
     }
-    
+
+    // 接收注册请求
     /**
      * Register new instance.
      *
@@ -109,10 +110,10 @@ public class InstanceController {
                 .optional(request, CommonParams.NAMESPACE_ID, Constants.DEFAULT_NAMESPACE_ID);
         final String serviceName = WebUtils.required(request, CommonParams.SERVICE_NAME);
         NamingUtils.checkServiceNameFormat(serviceName);
-        
+        // 封装 Instance
         final Instance instance = HttpRequestInstanceBuilder.newBuilder()
                 .setDefaultInstanceEphemeral(switchDomain.isDefaultInstanceEphemeral()).setRequest(request).build();
-        
+        // grpc InstanceOperatorClientImpl, http InstanceOperatorServiceImpl
         getInstanceOperator().registerInstance(namespaceId, serviceName, instance);
         return "ok";
     }
