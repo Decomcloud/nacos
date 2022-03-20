@@ -103,6 +103,7 @@ public class AsyncNotifyService {
                     String group = evt.group;
                     String tenant = evt.tenant;
                     String tag = evt.tag;
+                    // nacos server的列表
                     Collection<Member> ipList = memberManager.allMembers();
                     
                     // In fact, any type of queue here can be
@@ -111,17 +112,21 @@ public class AsyncNotifyService {
                     
                     for (Member member : ipList) {
                         if (!MemberUtil.isSupportedLongCon(member)) {
+                            // 通过http通知
                             httpQueue.add(new NotifySingleTask(dataId, group, tenant, tag, dumpTs, member.getAddress(),
                                     evt.isBeta));
                         } else {
+                            // 通过rpc通知
                             rpcQueue.add(
                                     new NotifySingleRpcTask(dataId, group, tenant, tag, dumpTs, evt.isBeta, member));
                         }
                     }
                     if (!httpQueue.isEmpty()) {
+                        // http通知
                         ConfigExecutor.executeAsyncNotify(new AsyncTask(nacosAsyncRestTemplate, httpQueue));
                     }
                     if (!rpcQueue.isEmpty()) {
+                        // rpc通知
                         ConfigExecutor.executeAsyncNotify(new AsyncRpcTask(rpcQueue));
                     }
                     
@@ -174,6 +179,7 @@ public class AsyncNotifyService {
                             header.addParam("isBeta", "true");
                         }
                         AuthHeaderUtil.addIdentityToHeader(header);
+                        // 发送并且注册回调
                         restTemplate.get(task.url, header, Query.EMPTY, String.class, new AsyncNotifyCallBack(task));
                     }
                 }
@@ -448,6 +454,7 @@ public class AsyncNotifyService {
             } catch (UnsupportedEncodingException e) {
                 LOGGER.error("URLEncoder encode error", e);
             }
+            // url地址
             if (StringUtils.isBlank(tenant)) {
                 this.url = MessageFormat.format(URL_PATTERN, target, EnvUtil.getContextPath(), dataId, group);
             } else {

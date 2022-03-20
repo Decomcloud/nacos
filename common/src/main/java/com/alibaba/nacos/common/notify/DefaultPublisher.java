@@ -203,6 +203,7 @@ public class DefaultPublisher extends Thread implements EventPublisher {
         
         LOGGER.debug("[NotifyCenter] the {} will received by {}", event, subscriber);
         // com.alibaba.nacos.common.notify.listener.Subscriber.onEvent 通知长轮询的客户端
+        // com.alibaba.nacos.common.notify.listener.Subscriber.onEvent 通知其他nacos server, 配置变更
         final Runnable job = () -> subscriber.onEvent(event);
         final Executor executor = subscriber.executor();
         
