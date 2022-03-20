@@ -392,7 +392,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
             udpSocket.send(ackEntry.getOrigin());
             
             ackEntry.increaseRetryTime();
-            
+            // 每个udp包发送出去后, 启动一个延迟的重发逻辑, 默认10s后检查是否接受到ack, 接受到会在ackMap中移除掉
             GlobalExecutor.scheduleRetransmitter(new Retransmitter(ackEntry),
                     TimeUnit.NANOSECONDS.toMillis(Constants.ACK_TIMEOUT_NANOS), TimeUnit.MILLISECONDS);
             
