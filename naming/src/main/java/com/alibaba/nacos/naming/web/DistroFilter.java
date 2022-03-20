@@ -96,16 +96,19 @@ public class DistroFilter implements Filter {
                 filterChain.doFilter(req, resp);
                 return;
             }
+            // 提取出ip和port
             String distroTag = distroTagGenerator.getResponsibleTag(req);
-            
+            // 是不是属于自己需要处理的
             if (distroMapper.responsible(distroTag)) {
+                // 需要自己处理, 直接下一个过滤器
                 filterChain.doFilter(req, resp);
                 return;
             }
-            
+            // 不需要自己处理, 转发
             // proxy request to other server if necessary:
             String userAgent = req.getHeader(HttpHeaderConsts.USER_AGENT_HEADER);
-            
+
+            // 从其他server发来的请求
             if (StringUtils.isNotBlank(userAgent) && userAgent.contains(UtilsAndCommons.NACOS_SERVER_HEADER)) {
                 // This request is sent from peer server, should not be redirected again:
                 Loggers.SRV_LOG.error("receive invalid redirect request from peer {}", req.getRemoteAddr());

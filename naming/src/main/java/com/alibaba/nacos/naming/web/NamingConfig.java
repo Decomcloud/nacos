@@ -35,7 +35,8 @@ public class NamingConfig {
     private static final String SERVICE_NAME_FILTER = "serviceNameFilter";
     
     private static final String TRAFFIC_REVISE_FILTER = "trafficReviseFilter";
-    
+
+    // 注册distro filter
     @Bean
     public FilterRegistrationBean distroFilterRegistration() {
         FilterRegistrationBean<DistroFilter> registration = new FilterRegistrationBean<>();
@@ -65,7 +66,8 @@ public class NamingConfig {
         registration.setOrder(1);
         return registration;
     }
-    
+
+    // 注册distro filter
     @Bean
     public DistroFilter distroFilter() {
         return new DistroFilter();
