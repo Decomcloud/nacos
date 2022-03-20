@@ -128,7 +128,8 @@ public interface NamingClientProxy extends Closeable {
      */
     ListView<String> getServiceList(int pageNo, int pageSize, String groupName, AbstractSelector selector)
             throws NacosException;
-    
+
+    // 客户端的订阅
     /**
      * Subscribe service.
      *

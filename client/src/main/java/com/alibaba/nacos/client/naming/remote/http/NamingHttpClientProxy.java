@@ -216,6 +216,8 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         params.put(UDP_PORT_PARAM, String.valueOf(udpPort));
         params.put(CLIENT_IP_PARAM, NetUtils.localIP());
         params.put(HEALTHY_ONLY_PARAM, String.valueOf(healthyOnly));
+        // 发送请求到 nacos server
+        // com.alibaba.nacos.naming.controllers.InstanceController.list接收
         String result = reqApi(UtilAndComs.nacosUrlBase + "/instance/list", params, HttpMethod.GET);
         if (StringUtils.isNotEmpty(result)) {
             return JacksonUtils.toObj(result, ServiceInfo.class);
@@ -356,7 +358,8 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         
         return listView;
     }
-    
+
+    // http的订阅
     @Override
     public ServiceInfo subscribe(String serviceName, String groupName, String clusters) throws NacosException {
         return queryInstancesOfService(serviceName, groupName, clusters, pushReceiver.getUdpPort(), false);
