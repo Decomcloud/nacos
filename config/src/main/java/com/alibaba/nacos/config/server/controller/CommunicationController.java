@@ -68,7 +68,8 @@ public class CommunicationController {
         this.dumpService = dumpService;
         this.longPollingService = longPollingService;
     }
-    
+
+    // 数据变更
     /**
      * Notify the change of config information.
      */

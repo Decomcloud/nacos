@@ -382,6 +382,7 @@ public abstract class DumpService {
             boolean isBeta) {
         String groupKey = GroupKey2.getKey(dataId, group, tenant);
         String taskKey = String.join("+", dataId, group, tenant, String.valueOf(isBeta), tag);
+        // 添加task
         dumpTaskMgr.addTask(taskKey, new DumpTask(groupKey, tag, lastModified, handleIp, isBeta));
         DUMP_LOG.info("[dump-task] add task. groupKey={}, taskKey={}", groupKey, taskKey);
     }
