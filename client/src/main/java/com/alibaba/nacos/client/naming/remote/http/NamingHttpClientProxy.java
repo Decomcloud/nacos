@@ -141,6 +141,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
     
     @Override
     public void registerService(String serviceName, String groupName, Instance instance) throws NacosException {
+        // 发送http 注册请求
         NAMING_LOGGER.info("[REGISTER-SERVICE] {} registering service {} with instance: {}", namespaceId, serviceName,
                 instance);
         String groupedServiceName = NamingUtils.getGroupedName(serviceName, groupName);
@@ -160,7 +161,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         params.put(HEALTHY_PARAM, String.valueOf(instance.isHealthy()));
         params.put(EPHEMERAL_PARAM, String.valueOf(instance.isEphemeral()));
         params.put(META_PARAM, JacksonUtils.toJson(instance.getMetadata()));
-        
+        // send request
         reqApi(UtilAndComs.nacosUrlInstance, params, HttpMethod.POST);
         
     }
@@ -411,11 +412,14 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         }
         
         NacosException exception = new NacosException();
-        
+        // 多台nacos server, 配置内部的一个域名解析服务器, 使用nginx反向代理和负载均衡
+        // eg: nacos-server:8848/nacos, isDomain=true
+        // 根据域名配置的nacos地址, nacos认为没有','分割的单个地址就是domain
         if (serverListManager.isDomain()) {
             String nacosDomain = serverListManager.getNacosDomain();
             for (int i = 0; i < maxRetry; i++) {
                 try {
+                    // send request
                     return callServer(api, params, body, nacosDomain, method);
                 } catch (NacosException e) {
                     exception = e;
@@ -426,6 +430,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
             }
         } else {
             Random random = new Random(System.currentTimeMillis());
+            // 随机生成index
             int index = random.nextInt(servers.size());
             
             for (int i = 0; i < servers.size(); i++) {
@@ -438,6 +443,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
                         NAMING_LOGGER.debug("request {} failed.", server, e);
                     }
                 }
+                // 发送失败, 不在次随机, 直接找下一个
                 index = (index + 1) % servers.size();
             }
         }
@@ -480,6 +486,7 @@ public class NamingHttpClientProxy extends AbstractNamingClientProxy {
         }
         
         try {
+            // nacosRestTemplate发送http请求
             HttpRestResult<String> restResult = nacosRestTemplate
                     .exchangeForm(url, header, Query.newInstance().initParams(params), body, method, String.class);
             end = System.currentTimeMillis();
