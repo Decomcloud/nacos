@@ -92,7 +92,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
     static {
         try {
             udpSocket = new DatagramSocket();
-            
+            // 用于接收客户端的回复
             Receiver receiver = new Receiver();
             
             Thread inThread = new Thread(receiver);
@@ -434,9 +434,11 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 
                 try {
+                    // 接受到客户端回复的udp包
                     udpSocket.receive(packet);
                     
                     String json = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8).trim();
+                    // 反序列化成ack packet
                     AckPacket ackPacket = JacksonUtils.toObj(json, AckPacket.class);
                     
                     InetSocketAddress socketAddress = (InetSocketAddress) packet.getSocketAddress();
@@ -448,6 +450,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
                     }
                     
                     String ackKey = AckEntry.getAckKey(ip, port, ackPacket.lastRefTime);
+                    // 从ackMap中移除
                     AckEntry ackEntry = ackMap.remove(ackKey);
                     if (ackEntry == null) {
                         throw new IllegalStateException(
