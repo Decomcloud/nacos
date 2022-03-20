@@ -41,6 +41,7 @@ public interface NamingClientProxy extends Closeable {
      * @param instance    instance to register
      * @throws NacosException nacos exception
      */
+    // 服务注册
     void registerService(String serviceName, String groupName, Instance instance) throws NacosException;
     
     /**

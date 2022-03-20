@@ -367,6 +367,7 @@ public abstract class RpcClient implements Closeable {
                             
                         }
                     }
+                    // 重新连接, 如果无法连接, 选择下一个
                     reconnect(reconnectContext.serverInfo, reconnectContext.onRequestFail);
                 } catch (Throwable throwable) {
                     // Do nothing
@@ -484,6 +485,7 @@ public abstract class RpcClient implements Closeable {
     }
     
     protected void switchServerAsync(final ServerInfo recommendServerInfo, boolean onRequestFail) {
+        // 注册重试时,会将当前尝试失败的server信息放入queue中, 在启动的线程中,替换成其他的
         reconnectionSignal.offer(new ReconnectContext(recommendServerInfo, onRequestFail));
     }
     
@@ -517,13 +519,16 @@ public abstract class RpcClient implements Closeable {
                 // 1.get a new server
                 ServerInfo serverInfo = null;
                 try {
+                    // 如果上次没有连接到推荐的server, 选择下一个
                     serverInfo = recommendServer.get() == null ? nextRpcServer() : recommendServer.get();
                     // 2.create a new channel to new server
                     Connection connectionNew = connectToServer(serverInfo);
+                    // 是否有连接到推荐的server
                     if (connectionNew != null) {
                         LoggerUtils.printIfInfoEnabled(LOGGER, "[{}] Success to connect a server [{}], connectionId = {}",
                                 name, serverInfo.getAddress(), connectionNew.getConnectionId());
                         // successfully create a new connect.
+                        // 切换新的连接
                         if (currentConnection != null) {
                             LoggerUtils.printIfInfoEnabled(LOGGER,
                                     "[{}] Abandon prev connection, server is {}, connectionId is {}", name,
@@ -641,14 +646,17 @@ public abstract class RpcClient implements Closeable {
         Response response;
         Exception exceptionThrow = null;
         long start = System.currentTimeMillis();
+        // 默认尝试3次
         while (retryTimes < RETRY_TIMES && System.currentTimeMillis() < timeoutMills + start) {
             boolean waitReconnect = false;
             try {
+                // currentConnection与某个nacos server建立的长连接
                 if (this.currentConnection == null || !isRunning()) {
                     waitReconnect = true;
                     throw new NacosException(NacosException.CLIENT_DISCONNECT,
                             "Client not connected, current status:" + rpcClientStatus.get());
                 }
+                // send request
                 response = this.currentConnection.request(request, timeoutMills);
                 if (response == null) {
                     throw new NacosException(SERVER_ERROR, "Unknown Exception.");
@@ -661,6 +669,7 @@ public abstract class RpcClient implements Closeable {
                                 LoggerUtils.printIfErrorEnabled(LOGGER,
                                         "Connection is unregistered, switch server, connectionId = {}, request = {}",
                                         currentConnection.getConnectionId(), request.getClass().getSimpleName());
+                                // 异步切换server
                                 switchServerAsync();
                             }
                         }
