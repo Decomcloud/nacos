@@ -295,7 +295,8 @@ public class ConfigController {
         ConfigAdvanceInfo configInfo = persistService.findConfigAdvanceInfo(dataId, group, tenant);
         return RestResultUtils.success(configInfo);
     }
-    
+
+    // 长轮询监听配置数据变化
     /**
      * The client listens for configuration changes.
      */
@@ -321,6 +322,7 @@ public class ConfigController {
         }
         
         // do long-polling
+        // 开启长轮询, 不会立即返回, 一直等到配置数据变更后, 会把变更后的数据返回
         inner.doPollingConfig(request, response, clientMd5Map, probeModify.length());
     }
     

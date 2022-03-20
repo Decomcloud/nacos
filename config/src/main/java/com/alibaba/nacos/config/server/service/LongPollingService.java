@@ -272,7 +272,8 @@ public class LongPollingService {
         
         // AsyncContext.setTimeout() is incorrect, Control by oneself
         asyncContext.setTimeout(0L);
-        
+        // 执行长轮询
+        // com.alibaba.nacos.config.server.service.LongPollingService.ClientLongPolling.run
         ConfigExecutor.executeLongPolling(
                 new ClientLongPolling(asyncContext, clientMd5Map, ip, probeRequestSize, timeout, appName, tag));
     }
@@ -392,6 +393,8 @@ public class LongPollingService {
         
         @Override
         public void run() {
+            // 执行逻辑
+            // 这个地方开启了延时任务, 到了timeout时间后才执行, 返回结果
             asyncTimeoutFuture = ConfigExecutor.scheduleLongPolling(new Runnable() {
                 @Override
                 public void run() {
