@@ -62,6 +62,7 @@ public class ClientBeatProcessor implements BeatProcessor {
     
     @Override
     public void run() {
+        // 处理逻辑
         Service service = this.service;
         if (Loggers.EVT_LOG.isDebugEnabled()) {
             Loggers.EVT_LOG.debug("[CLIENT-BEAT] processing beat: {}", rsInfo.toString());
@@ -78,13 +79,16 @@ public class ClientBeatProcessor implements BeatProcessor {
                 if (Loggers.EVT_LOG.isDebugEnabled()) {
                     Loggers.EVT_LOG.debug("[CLIENT-BEAT] refresh beat: {}", rsInfo.toString());
                 }
+                // 更新heartbeat时间
                 instance.setLastBeat(System.currentTimeMillis());
+                // 如果不正常, 变为正常
                 if (!instance.isMarked() && !instance.isHealthy()) {
                     instance.setHealthy(true);
                     Loggers.EVT_LOG
                             .info("service: {} {POS} {IP-ENABLED} valid: {}:{}@{}, region: {}, msg: client beat ok",
                                     cluster.getService().getName(), ip, port, cluster.getName(),
                                     UtilsAndCommons.LOCALHOST_SITE);
+                    // 变化后, 发布变化事件
                     getPushService().serviceChanged(service);
                 }
             }

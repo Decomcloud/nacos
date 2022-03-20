@@ -359,7 +359,8 @@ public class InstanceController {
         result.set("metadata", JacksonUtils.transferToJsonNode(instance.getMetadata()));
         return result;
     }
-    
+
+    // server接收client发送的心跳
     /**
      * Create a beat for instance.
      *
@@ -401,6 +402,9 @@ public class InstanceController {
                 serviceName, namespaceId);
         BeatInfoInstanceBuilder builder = BeatInfoInstanceBuilder.newBuilder();
         builder.setRequest(request);
+        // grpc InstanceOperatorClientImpl
+        // http InstanceOperatorServiceImpl
+        // 处理收到的心跳
         int resultCode = getInstanceOperator()
                 .handleBeat(namespaceId, serviceName, ip, port, clusterName, clientBeat, builder);
         result.put(CommonParams.CODE, resultCode);

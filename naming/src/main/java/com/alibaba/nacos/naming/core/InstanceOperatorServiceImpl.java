@@ -291,7 +291,10 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
             RsInfo clientBeat, BeatInfoInstanceBuilder builder) throws NacosException {
         com.alibaba.nacos.naming.core.Instance instance = serviceManager
                 .getInstance(namespaceId, serviceName, cluster, ip, port);
-        
+        // 心跳补偿, 补偿注册
+        // 1. client register to nacos sever1, server1同步复制给server2失败了, 这样server2是没有client数据的
+        // 2. client register to nacos sever1, server1未来及同步, 然后server1重启了
+        // 3. 注册了, 但是网络原因导致上报心跳没有成功, server会摘除这个数据, 过来很长时间, 再来心跳
         if (instance == null) {
             if (clientBeat == null) {
                 return NamingResponseCode.RESOURCE_NOT_FOUND;
@@ -300,6 +303,7 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
             Loggers.SRV_LOG.warn("[CLIENT-BEAT] The instance has been removed for health mechanism, "
                     + "perform data compensation operations, beat: {}, serviceName: {}", clientBeat, serviceName);
             instance = parseInstance(builder.setBeatInfo(clientBeat).setServiceName(serviceName).build());
+            // 补偿注册
             serviceManager.registerInstance(namespaceId, serviceName, instance);
         }
         
@@ -313,6 +317,7 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
             clientBeat.setPort(port);
             clientBeat.setCluster(cluster);
         }
+        // 处理客户端上报的心跳
         service.processClientBeat(clientBeat);
         return NamingResponseCode.OK;
     }
