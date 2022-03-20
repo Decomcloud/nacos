@@ -89,7 +89,8 @@ public class PushReceiver implements Runnable, Closeable {
             NAMING_LOGGER.error("[NA] init udp socket failed", e);
         }
     }
-    
+
+    // 接收服务器推送过来的数据包
     @Override
     public void run() {
         while (!closed) {
@@ -98,14 +99,15 @@ public class PushReceiver implements Runnable, Closeable {
                 // byte[] is initialized with 0 full filled by default
                 byte[] buffer = new byte[UDP_MSS];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                
+                // 接收数据
                 udpSocket.receive(packet);
                 
                 String json = new String(IoUtils.tryDecompress(packet.getData()), UTF_8).trim();
                 NAMING_LOGGER.info("received push data: " + json + " from " + packet.getAddress().toString());
-                
+                // 反序列化接收到的数据
                 PushPacket pushPacket = JacksonUtils.toObj(json, PushPacket.class);
                 String ack;
+                // 服务实例变更
                 if (PUSH_PACKAGE_TYPE_DOM.equals(pushPacket.type) || PUSH_PACKAGE_TYPE_SERVICE.equals(pushPacket.type)) {
                     serviceInfoHolder.processServiceInfo(pushPacket.data);
                     
@@ -122,7 +124,7 @@ public class PushReceiver implements Runnable, Closeable {
                     ack = "{\"type\": \"unknown-ack\"" + ", \"lastRefTime\":\"" + pushPacket.lastRefTime
                             + "\", \"data\":" + "\"\"}";
                 }
-                
+                // 封装相应的应答数据包
                 udpSocket.send(new DatagramPacket(ack.getBytes(UTF_8), ack.getBytes(UTF_8).length,
                         packet.getSocketAddress()));
             } catch (Exception e) {
