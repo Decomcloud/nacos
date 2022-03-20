@@ -171,7 +171,9 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
         
         // now try to enable the push
         try {
+            // 如果有客户端的端口号
             if (subscriber.getPort() > 0 && pushService.canEnablePush(subscriber.getAgent())) {
+                // 添加监听器, 放入client map中
                 subscriberServiceV1.addClient(namespaceId, serviceName, cluster, subscriber.getAgent(),
                         new InetSocketAddress(clientIP, subscriber.getPort()), pushDataSource, StringUtils.EMPTY,
                         StringUtils.EMPTY);
@@ -197,6 +199,7 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
                 .srvIPs(Arrays.asList(StringUtils.split(cluster, StringUtils.COMMA)));
         
         // filter ips using selector:
+        // 如果有多机房, 在这里进行选择, 根据配置,路由规则,选择相同机房的服务实例
         if (service.getSelector() != null && StringUtils.isNotBlank(clientIP)) {
             srvedIps = selectorManager.select(service.getSelector(), clientIP, srvedIps);
         }
@@ -214,6 +217,7 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
         }
         
         long total = 0;
+        // 健康和异常的服务列表
         Map<Boolean, List<com.alibaba.nacos.naming.core.Instance>> ipMap = new HashMap<>(2);
         ipMap.put(Boolean.TRUE, new ArrayList<>());
         ipMap.put(Boolean.FALSE, new ArrayList<>());
@@ -226,9 +230,10 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
             ipMap.get(ip.isHealthy()).add(ip);
             total += 1;
         }
-        
+        // 保护阈值
         double threshold = service.getProtectThreshold();
         List<Instance> hosts;
+        // 触发了保护阈值, 会把健康和异常的都返回
         if ((float) ipMap.get(Boolean.TRUE).size() / total <= threshold) {
             
             Loggers.SRV_LOG.warn("protect threshold reached, return all ips, service: {}", result.getName());
@@ -238,6 +243,7 @@ public class InstanceOperatorServiceImpl implements InstanceOperator {
                     // set all to `healthy` state to protect
                     .peek(instance -> instance.setHealthy(true)).collect(Collectors.toCollection(LinkedList::new));
         } else {
+            // 如果没有触发, 那么只返回正常的实例, healthOnly为false, 也会返回异常的实例
             result.setReachProtectionThreshold(false);
             hosts = new LinkedList<>(ipMap.get(Boolean.TRUE));
             if (!healthOnly) {

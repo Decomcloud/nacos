@@ -319,9 +319,12 @@ public class InstanceController {
         String app = WebUtils.optional(request, "app", StringUtils.EMPTY);
         String env = WebUtils.optional(request, "env", StringUtils.EMPTY);
         String tenant = WebUtils.optional(request, "tid", StringUtils.EMPTY);
-        
+
+        // 客户端对实例数据增加的监听器
         Subscriber subscriber = new Subscriber(clientIP + ":" + udpPort, agent, app, clientIP, namespaceId, serviceName,
                 udpPort, clusters);
+        // grpc InstanceOperatorClientImpl
+        // 其他 InstanceOperatorServiceImpl
         return getInstanceOperator().listInstance(namespaceId, serviceName, subscriber, clusters, healthyOnly);
     }
     
