@@ -65,6 +65,7 @@ public class HttpHealthCheckProcessor implements HealthCheckProcessor {
     
     @Override
     public void process(HealthCheckTask task) {
+        // server 反向探测是否健康
         List<Instance> ips = task.getCluster().allIPs(false);
         if (CollectionUtils.isEmpty(ips)) {
             return;
