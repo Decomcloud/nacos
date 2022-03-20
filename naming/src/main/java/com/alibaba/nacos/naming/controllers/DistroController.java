@@ -60,7 +60,8 @@ public class DistroController {
     
     @Autowired
     private SwitchDomain switchDomain;
-    
+
+    // 接收服务实例变更的请求
     /**
      * Synchronize datum.
      *
@@ -82,9 +83,11 @@ public class DistroController {
                 String serviceName = KeyBuilder.getServiceName(entry.getKey());
                 if (!serviceManager.containService(namespaceId, serviceName) && switchDomain
                         .isDefaultInstanceEphemeral()) {
+                    // 初始化服务在内存里的数据结构
                     serviceManager.createEmptyService(namespaceId, serviceName, true);
                 }
                 DistroHttpData distroHttpData = new DistroHttpData(createDistroKey(entry.getKey()), entry.getValue());
+                // 接收数据
                 distroProtocol.onReceive(distroHttpData);
             }
         }
