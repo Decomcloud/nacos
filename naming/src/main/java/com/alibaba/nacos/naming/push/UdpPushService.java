@@ -61,7 +61,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
-
+// 自己就是一个spring监听器, 调用com.alibaba.nacos.naming.push.UdpPushService.onApplicationEvent
 /**
  * Push service.
  *
@@ -127,9 +127,11 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
         if (futureMap.containsKey(UtilsAndCommons.assembleFullServiceName(namespaceId, serviceName))) {
             return;
         }
+        // 启动延迟任务
         Future future = GlobalExecutor.scheduleUdpSender(() -> {
             try {
                 Loggers.PUSH.info(serviceName + " is changed, add it to push queue.");
+                // 获取client map
                 ConcurrentMap<String, PushClient> clients = subscriberServiceV1.getClientMap()
                         .get(UtilsAndCommons.assembleFullServiceName(namespaceId, serviceName));
                 if (MapUtils.isEmpty(clients)) {
@@ -158,10 +160,11 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
                         
                         Loggers.PUSH.debug("[PUSH-CACHE] cache hit: {}:{}", serviceName, client.getAddrStr());
                     }
-                    
+                    // 封装为udp的包
                     if (compressData != null) {
                         ackEntry = prepareAckEntry(client, compressData, data, lastRefTime);
                     } else {
+                        // 先转换为byte, 然后在封装udp
                         ackEntry = prepareAckEntry(client, prepareHostsData(client), lastRefTime);
                         if (ackEntry != null) {
                             cache.put(key,
@@ -172,7 +175,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
                     Loggers.PUSH.info("serviceName: {} changed, schedule push for: {}, agent: {}, key: {}",
                             client.getServiceName(), client.getAddrStr(), client.getAgent(),
                             (ackEntry == null ? null : ackEntry.getKey()));
-                    
+                    // 推送
                     udpPush(ackEntry);
                 }
             } catch (Exception e) {
@@ -266,6 +269,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
         String key = AckEntry
                 .getAckKey(socketAddress.getAddress().getHostAddress(), socketAddress.getPort(), lastRefTime);
         try {
+            // 封装为udp的串
             DatagramPacket packet = new DatagramPacket(dataBytes, dataBytes.length, socketAddress);
             AckEntry ackEntry = new AckEntry(key, packet);
             // we must store the key be fore send, otherwise there will be a chance the
@@ -289,6 +293,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
      * @param service service
      */
     public void serviceChanged(Service service) {
+        // 发布事件
         this.applicationContext.publishEvent(new ServiceChangeEvent(this, service));
     }
     
@@ -383,6 +388,7 @@ public class UdpPushService implements ApplicationContextAware, ApplicationListe
             udpSendTimeMap.put(ackEntry.getKey(), System.currentTimeMillis());
             
             Loggers.PUSH.info("send udp packet: " + ackEntry.getKey());
+            // jdk原生udp数据包的推送
             udpSocket.send(ackEntry.getOrigin());
             
             ackEntry.increaseRetryTime();

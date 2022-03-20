@@ -172,7 +172,10 @@ public class Service extends com.alibaba.nacos.api.naming.pojo.Service implement
     public boolean matchUnlistenKey(String key) {
         return KeyBuilder.matchInstanceListKey(key, namespaceId, getName());
     }
-    
+    // com.alibaba.nacos.naming.consistency.ephemeral.distro.DistroConsistencyServiceImpl.onPut
+    // 会把变化的放入queue中
+    // com.alibaba.nacos.naming.consistency.ephemeral.distro.DistroConsistencyServiceImpl.Notifier.run
+    // 会遍历监听器,然后回调
     @Override
     public void onChange(String key, Instances value) throws Exception {
         
@@ -193,7 +196,7 @@ public class Service extends com.alibaba.nacos.api.naming.pojo.Service implement
                 instance.setWeight(0.01D);
             }
         }
-        
+        // 回调监听变化的listener
         updateIPs(value.getInstanceList(), KeyBuilder.matchEphemeralInstanceListKey(key));
         
         recalculateChecksum();
@@ -278,6 +281,7 @@ public class Service extends com.alibaba.nacos.api.naming.pojo.Service implement
         }
         
         setLastModifiedMillis(System.currentTimeMillis());
+        // 发布事件
         getPushService().serviceChanged(this);
         ApplicationUtils.getBean(DoubleWriteEventListener.class).doubleWriteToV2(this, ephemeral);
         StringBuilder stringBuilder = new StringBuilder();
